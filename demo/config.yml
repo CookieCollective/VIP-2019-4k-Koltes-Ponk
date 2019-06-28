@@ -1,0 +1,15 @@
+
+# Use this file to customize your demo.
+# Write computer specific settings in config.local.yml, which won't be versioned.
+demo:
+  audioTool: none
+  name: template
+  resolution:
+    width: 800
+    height: 600
+  glslversion: 330
+  bufferCount: 2
+shader:
+  filename: shader.frag
+  globals:
+    float:
