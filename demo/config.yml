@@ -3,12 +3,10 @@
 # Write computer specific settings in config.local.yml, which won't be versioned.
 demo:
   audioTool: oidos
-  name: template
-  resolution:
-    width: 800
-    height: 600
+  name: milkshake
   glslversion: 330
   bufferCount: 2
+  closeWhenFinished: true
 shader:
   filename: shader.frag
   globals:

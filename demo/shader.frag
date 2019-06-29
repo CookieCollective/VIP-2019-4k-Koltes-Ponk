@@ -60,51 +60,110 @@ float sequence (float t, float a, float b) {
 
 float map (vec3 pos) {
   float scene = 1.0;
-  float s0 = 2.0;//floor(beat);
-  float b0 = 0.1;//mod(beat, 3.0)/3.;
-
-  #ifdef veda
-  // pos.zx *= rot(mouse.x*2.0-1.0);
-  // pos.zy *= rot(mouse.y*2.0-1.0);
-  #endif
-  /*
-  pos.xz *= rot(b0+s0);
-  pos.yz *= rot(b0+s0);
-  pos.yx *= rot(b0+s0);
-  float amplitude = 1.0;
-  float range = .1+.4*b0;
-  float ay = .4+.1*b0+s0*.2;
-  float ax = -.2-.4*b0+s0*4.;
-  float az = -.5-.2*b0+s0;
-  for (int index = 0; index < 6; ++index) {
-    pos = abs(pos)-range*amplitude;
-    pos.xz *= rot(ay*amplitude);
-    pos.yz *= rot(ax*amplitude);
-    pos.yx *= rot(az*amplitude);
-    pos = abs(pos)-range*amplitude*.1;
-    scene = min(scene, sdCylinderBox(pos.xz, vec2(.001*amplitude)));
-  }
-  */
-  // scene = length(pos.xy)-0.05;
 
   // float spicy = fbm(pos * 8.0 + noise(pos * 8.0) * 4.0) * 0.1 + noise(pos * 600.0) * 0.001;
+  // float tt = mod(time, 130.);
+  float tt = mod(time, 144.);
+  // tt = mod(tt, 34.);
+  // float tt = 34.+mod(time, 41.);
+  // float tt = 75.+mod(time,35.);
+  // float tt = mod(time, 130.);
+  // float tt = 130.+mod(time, 14.);
+  if (tt < 34.) {
+    float t = tt / 34.;
+    const float count = 4.;
+    for (float index = count; index > 0.; --index) {
+      float wave = 10.*mod(tt * .3 - index/count, 1.);
+      vec3 p = pos/wave;
+      float offset = mix(0., mod(tt+index, PI*2.), smoothstep(.1,.15,t));
+      p.xz *= rot(offset);
+      p.yz *= rot(offset);
+      p = abs(p)-.1*smoothstep(.8, 1., t);
+      offset = mix(0., mod(tt+index, PI*2.), smoothstep(.4,.45,t));
+      p.xz *= rot(offset);
+      p.yz *= rot(offset);
+      scene = min(scene,wave*max(max(max(sdBox(p, vec3(.1)),-sdBox(p, vec3(.095,1,.095))),-sdBox(p, vec3(.095,.095,1))),-sdBox(p, vec3(1,.095,.095))));
+      p = abs(p)-.1;
+      scene = min(scene,wave*(length(p)-.04*smoothstep(.6,.8,t)+.03));
+    }
+  } else if (tt < 75.) {
+    float t = (tt-34.) / 41.;
+    const float count = 6.;
+    float amplitude = 1.0;
+    float t1 = smoothstep(.0,1.,t);
+    pos.xz *= rot(mix(0., mod(t*5.98, PI*2.), t1));
+    pos.yz *= rot(mix(0., mod(t*5.64, PI*2.), t1));
+    pos.yx *= rot(mix(0., mod(t*5.35, PI*2.), t1));
+    for (float index = count; index > 0.; --index) {
+      vec3 p = pos;
+      float yy = floor((p.z-tt*amplitude)/amplitude);
+      p.z = repeat(p.z-tt*amplitude, amplitude);
+      float offset = mix(0., (t+index+mod(yy,PI*2.)), smoothstep(.0,.5,t));
+      p.xz *= rot(offset);
+      p.yz *= rot(offset);
+      p = p.xzy;
+      scene = smoothmin(scene, max(-(sdCylinder(p, vec2(.5,1.)*amplitude)), sdCylinder(p, vec2(.51,.02)*amplitude)), 0.2*amplitude);
+      amplitude /= 1.1;
+    }
+    pos.xy *= rot(-tt);
+    pos = abs(pos);
+    moda(pos.xy, 1.+3.*smoothstep(.5,1.,t));
+    pos.x -= .1+.05*sin(pos.z * 8. + tt * 2.);
+    float zz = floor(pos.z/.2);
+    pos.z = repeat(pos.z, .2);
+    // scene = smoothmin(scene, length(pos)+.01-.03*smoothstep(.4,.5,t), .1);
+    pos.xz *= rot(tt+zz);
+    pos.yz *= rot(tt+zz);
+    float t2 = smoothstep(.3,.5,t);
+    scene = smoothmin(scene, sdBox(pos, vec3(-.1+.2*t2)), .1*t2);
+    float r1 = .1*t2;
+    float th1 = .09*t2;
+    // scene = smoothmin(scene, max(max(max(sdBox(pos, vec3(r1)),-sdBox(pos, vec3(th1,1,th1))),-sdBox(pos, vec3(th1,th1,1))),-sdBox(pos, vec3(1,th1,th1))), .1*t2);
+  } else if (tt < 130.) {
+    float t = (tt-75.) / 55.;
+    // float t1 = smoothstep(.5,.8,t);
+    vec3 pp = pos;
+    pos.xz *= rot(tt*.098);
+    pos.yz *= rot(tt*.064);
+    pos.yx *= rot(tt*.035);
+    pos.z += tt;
+    vec3 p = pos;
+    // const float count = 5.;
+    float amplitude = 1.;
+    for (float index = 5.; index > 0.; --index) {
+      // p = abs(p)-1.*amplitude;
+      // p.yz *= rot(.2);
+      // p.yx *= rot(.2);
+      p = repeat(p, mix(4.5,3.0,t)*amplitude);
+      // p.xy *= rot(rt);
+      scene = min(scene, abs(sdBox(p, vec3(amplitude)))-.5*amplitude);
+      // scene = smoothmin(scene, abs(sdBox(p, vec3(amplitude)))-.5*amplitude, .01*amplitude);
+      // scene = smoothmin(scene, abs(length(p)-amplitude)-.9*amplitude, .1*amplitude);
+      amplitude /= 3.;
+    }
+    scene = max(-1., -scene);
+    scene = max(scene, -(length(pos.xy)-1.));
 
-  float tt = mod(time, 34.);
-  float t = tt / 34.;
-  const float count = 4.;
-  for (float index = count; index > 0.; --index) {
-    float wave = 10.*mod(time * .2 - index/count, 1.);
-    vec3 p = pos/wave;
-    float offset = mix(0., mod(time+index, PI*2.), smoothstep(.1,.2,t));
-    p.xz *= rot(offset);
-    p.yz *= rot(offset);
-    p = abs(p)-.1*smoothstep(.8, 1., t);
-    offset = mix(0., mod(time+index, PI*2.), smoothstep(.4,.6,t));
-    p.xz *= rot(offset);
-    p.yz *= rot(offset);
-    scene = min(scene,wave*max(max(max(sdBox(p, vec3(.1)),-sdBox(p, vec3(.099,1,.099))),-sdBox(p, vec3(.099,.099,1))),-sdBox(p, vec3(1,.099,.099))));
-    p = abs(p)-.1;
-    scene = min(scene,wave*(length(p)-.01*smoothstep(.6,.8,t)));
+    pos = pp;
+    float s0 = floor(tt);
+    float b0 = fract(tt);
+    pos.xz *= rot(b0+s0);
+    pos.yz *= rot(b0+s0);
+    pos.yx *= rot(b0+s0);
+    amplitude = 1.0;
+    float range = .05*sin(b0*PI);
+    float ay = .4+.1*b0+s0*.2;
+    float ax = -.2-.4*b0+s0*4.;
+    float az = -.5-.2*b0+s0;
+    for (int index = 0; index < 4; ++index) {
+      pos = abs(pos)-range*amplitude;
+      pos.xz *= rot(ay*amplitude);
+      pos.yz *= rot(ax*amplitude);
+      pos.yx *= rot(az*amplitude);
+      pos = abs(pos)-range*amplitude*.1;
+      scene = smoothmin(scene, sdCylinderBox(pos.xz, vec2(.001*amplitude)), .05*amplitude);
+    }
+
   }
 
   return scene;
@@ -116,29 +175,51 @@ void main() {
 
     vec2 uv = (gl_FragCoord.xy-0.5*synth_Resolution)/synth_Resolution.y;
     vec3 eye = vec3(0,0.01,1);
-    vec3 ray = normalize(vec3(uv,-1));
+    vec3 ray = normalize(vec3(uv,-.9));
     vec4 result = vec4(eye, 0);
     float dither = random(ray.xy);
-    float total = dither * .1;
+    float total = dither * .4;
     const float maxt = 10.0;
     const float count = 50.0;
     for (float index = count; index > 0.0; --index) {
       result.xyz = eye + ray * total;
       float dist = map(result.xyz);
-      if (dist < total * 1.0/synth_Resolution.y) {
+      // if (dist < total * 1./synth_Resolution.y) {
+      if (dist < total * 1./synth_Resolution.y) {
+        // result.a += .02;
+      // }
+      // if (result.a >= 1.) {
         result.a = index/count;
         break;
       }
+      // dist = max(.01,dist);
       dist *= 0.9 + 0.1 * dither;
       total += dist;
     }
 
     vec3 normal = getNormal(result.xyz);
-    vec3 color = vec3(.2);
-    color += vec3(1.0, 0.78, 0.44) * pow(clamp(dot(normal, normalize(vec3(.4,2.,1.))), 0., 1.), 4.);
-    color += vec3(1, 0.917, 0.760) * pow(clamp(dot(normal, normalize(vec3(2,-2,1))), 0., 1.), 3.);
+    vec3 color = vec3(1.);
+    // color += vec3(0.44, 0.65, 1.0) * pow(clamp(dot(normal, normalize(vec3(.4,2.,1.))), 0., 1.), 4.);
+    // color += vec3(0.96, 0.79, 0.2) * pow(clamp(dot(normal, normalize(vec3(2,-2,1))), 0., 1.), 3.);
+    color += pow(clamp(dot(normal, normalize(vec3(.4,2.,1.))), 0., 1.), 4.);
+    color += pow(clamp(dot(normal, normalize(vec3(2,-2,1))), 0., 1.), 3.);
     color *= result.a;
-    color *= smoothstep(5.0, 0.0, total);
+    // float lod = 8.0;
+    // color = ceil(color/lod);
+    // color *= smoothstep(5.0, 4.0, total);
+    // color = smoothstep(.0,.8, color);
+
+    ray.xz *= rot(time*.2);
+    ray.yz *= rot(time*.1);
+    // vec3 bg = 1.0-(ray*0.5+0.5);
+    // float should = step(0.0001,(color.r+color.b+color.g)/3.);
+    float should = smoothstep(0.0, .8,(color.r+color.b+color.g)/3.);
+    uv.y -= sqrt(abs(uv.x)+.01)*.35-.1;
+    float heart = smoothstep(0.0, 0.001, length(uv)-1.5*smoothstep(130., 144., mod(time, 144.)));
+    vec3 bg = mix(vec3(0.92, 0.12, 0.12), vec3(1), smoothstep(.4,.5,sin(ray.y*100.)));
+    bg = mix(vec3(1), bg, heart);
+    color = mix(bg,color, should*smoothstep(mod(time,144.)<34.?1.:10., 0.0, length(result.xyz)));
+    // color = mix(1.-bg, bg, heart);
 
     gl_FragColor = vec4(color, 1);
 }
