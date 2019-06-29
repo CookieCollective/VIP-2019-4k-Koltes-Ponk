@@ -123,7 +123,7 @@ function makeChain(config, options) {
 					.replace(/#ifndef\s+SYNTHCLIPSE_ONLY([\s\S]*?)(?:#else[\s\S]*?)?#endif/g, '$1')
 					.replace(/\bconst\b/g, '');
 
-				let globals = config.get('shader:globals') || {};
+				const globals = config.get('shader:globals') || {};
 
 				function addGlobal(type, value) {
 					if (!globals[type])
@@ -163,14 +163,11 @@ function makeChain(config, options) {
 				});
 
 				const shaderLines = shader.split('\n');
-				Object.keys(globals).forEach((type) => (globals[type] == null) && delete globals[type]);
 
 				let newShader = [
 					'//! FRAGMENT',
-					config.get('demo:glslversion') ? '#version ' + config.get('demo:glslversion') : '',
 					'uniform float _[' + uniforms.length + '];',
 				]
-
 					.concat(Object.keys(globals).map(type => {
 						return type + ' ' + globals[type].join(', ') + ';';
 					}))
@@ -192,39 +189,16 @@ function makeChain(config, options) {
 			'--output=' + join(options.buildDirectory, 'shader.min.glsl'),
 		]))
 
-		.then(() => readFile(join(options.buildDirectory, options.nominify ? 'shader.glsl' : 'shader.min.glsl')))
+		.then(() => readFile(join(options.buildDirectory, 'shader.min.glsl')))
 		.then(contents => {
-			let shader;
-
-			if (options.nominify) {
-				shader = contents.toString().replace(/\n/g, '\\n').replace(/"/g, '\\"');
-			}
-			else {
-				const lines = contents.toString().split('\n');
-				shader = lines[lines.length - 1];
-			}
+			const lines = contents.toString().split('\n');
+			const shader = lines[lines.length - 1];
 
 			const headerContents = [
 				'static const char *shaderSource = "' + shader.replace(/\r/g, '') + '";',
-				'#define UNIFORM_FLOAT_COUNT ' + uniforms.length,
-				'static float uniforms[UNIFORM_FLOAT_COUNT];'
+				'#define UNIFORM_COUNT ' + uniforms.length,
+				'static float uniforms[UNIFORM_COUNT];'
 			];
-
-			if (options.debug)
-				headerContents.push(
-					'#define DEBUG'
-				);
-
-			if (config.get('demo:bufferCount') && config.get('demo:bufferCount') != '0')
-				headerContents.push(
-					'#define BUFFERS '+config.get('demo:bufferCount')
-				);
-
-			if (config.get('demo:audioTool') == 'shader')
-				headerContents.unshift(
-					'#include "audio-shader.cpp"',
-					'#define AUDIO_TEXTURE'
-				);
 
 			uniforms.forEach((name, index) => {
 				name = name
@@ -409,19 +383,12 @@ function makeChain(config, options) {
 					])))),
 		]))
 
-		.then(() => spawn(options.debug ? 'Link' : config.get('paths:crinkler'),
-			(options.debug ?
-				config.get('debugLinkArgs')
-					.concat([
-						'/OUT:' + options.exePath,
-					])
-				:
-				config.get('crinkler:args')
-					.concat([
-						'/REPORT:' + join(options.buildDirectory, 'stats.html'),
-						'/OUT:' + options.exePath,
-					])
-			)
+		.then(() => spawn(config.get('paths:crinkler'),
+			config.get('crinkler:args')
+				.concat([
+					'/REPORT:' + join(options.buildDirectory, 'stats.html'),
+					'/OUT:' + options.exePath,
+				])
 				.concat(Object.keys(asmSources))
 				.concat(Object.keys(cppSources))
 		));

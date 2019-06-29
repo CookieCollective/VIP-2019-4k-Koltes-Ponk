@@ -47,7 +47,7 @@ config.defaults({
 	},
 	crinkler: {
 		args: [
-			'/ENTRY:main',
+			'/ENTRY:entry',
 			'/PRIORITY:NORMAL',
 			'/COMPMODE:FAST',
 			'/RANGE:opengl32',
@@ -60,18 +60,9 @@ config.defaults({
 			'user32.lib',
 		],
 	},
-	debugLinkArgs: [
-		'/SUBSYSTEM:CONSOLE',
-		'/MACHINE:X86',
-		'winmm.lib',
-		'gdi32.lib',
-		'opengl32.lib',
-		'kernel32.lib',
-		'user32.lib',
-	],
 	demo: {
 		audioFilename: demoAudioFilename,
-		audioTool: 'none', // or 4klang, 8klang, oidos, none, shader
+		audioTool: 'none', // or 4klang, 8klang, oidos
 		closeWhenFinished: false,
 		// name
 		resolution: {
@@ -96,6 +87,8 @@ config.defaults({
 		filename: 'shader.stoy',
 		globals: {},
 		time: {
+			beatConstant: 'beat',
+			bpmUniform: 'BPM',
 		},
 		uniforms: [],
 	},
@@ -118,7 +111,6 @@ if ([
 	'8klang',
 	'none',
 	'oidos',
-	'shader',
 ].indexOf(config.get('demo:audioTool')) === -1) {
 	throw new Error('Config key "demo:audioTool" is not valid.');
 }

@@ -31,8 +31,6 @@ const outputDirectory = 'dist';
 const exePath = resolve(outputDirectory, config.get('demo:name') + '.exe');
 
 let chain = require('./make-chain')(config, {
-	debug : process.argv.includes('debug'),
-	nominify : process.argv.includes('nominify'),
 	buildDirectory: 'build',
 	exePath,
 });
